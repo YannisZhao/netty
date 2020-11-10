@@ -33,6 +33,9 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * {@link MultithreadEventLoopGroup} implementations which is used for NIO {@link Selector} based {@link Channel}s.
+ *
+ * NioEventLoopGroup即NioEventLoop的组，负责创建和管理NioEventLoop
+ * 创建的NioEventLoop保存在父类{@link MultithreadEventLoopGroup#children}数组中
  */
 public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
@@ -110,6 +113,16 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         super(nThreads, executor, chooserFactory, selectorProvider, selectStrategyFactory, rejectedExecutionHandler);
     }
 
+    /**
+     * 创建NioEventLoopGroup实例
+     * @param nThreads 线程数，其实是{@link MultithreadEventLoopGroup#children}数组的大小
+     * @param executor 执行任务的线程池，不传则创建默认的{@link io.netty.util.concurrent.ThreadPerTaskExecutor}
+     * @param chooserFactory EventExecutor选择器工厂，next()调用时，EventExecutor选择器会从EventExecutor[] children中选择一个
+     * @param selectorProvider Selector SPI提供者
+     * @param selectStrategyFactory select策略工厂
+     * @param rejectedExecutionHandler 线程池拒绝策略，最终传给NioEventLoop
+     * @param taskQueueFactory 线程池任务队列，不传默认使用jctools的MpscXXXQueue，大小1024
+     */
     public NioEventLoopGroup(int nThreads, Executor executor, EventExecutorChooserFactory chooserFactory,
                              final SelectorProvider selectorProvider,
                              final SelectStrategyFactory selectStrategyFactory,
@@ -139,6 +152,10 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         }
     }
 
+    /**
+     * 创建NioEventLoop，参数从构造器往上层传，现在有从父类{@link MultithreadEventLoopGroup#newChild}传回来了
+     * @param executor 如果创建NioEventLoopGroup时没有传入，
+     */
     @Override
     protected EventLoop newChild(Executor executor, Object... args) throws Exception {
         EventLoopTaskQueueFactory queueFactory = args.length == 4 ? (EventLoopTaskQueueFactory) args[3] : null;

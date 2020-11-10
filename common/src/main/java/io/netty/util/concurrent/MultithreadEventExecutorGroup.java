@@ -78,6 +78,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
         children = new EventExecutor[nThreads];
 
+        // 初始化每个子EventExecutor
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
@@ -154,6 +155,9 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      * Create a new EventExecutor which will later then accessible via the {@link #next()}  method. This method will be
      * called for each thread that will serve this {@link MultithreadEventExecutorGroup}.
      *
+     * 创建子线程池，如NioEventLoop就是一个单线程线程池
+     * executor从EventLoopGroup如NioEventLoopGroup开始一值传递到EventExecutor，
+     * 每个EventExecutor才是真正执行任务的线程池
      */
     protected abstract EventExecutor newChild(Executor executor, Object... args) throws Exception;
 
