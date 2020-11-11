@@ -42,6 +42,8 @@ import java.io.Serializable;
  * <li>{@code io.netty.processId} - an integer between 0 and 65535</li>
  * </ul>
  * </p>
+ *
+ * Channel的独立标识
  */
 public interface ChannelId extends Serializable, Comparable<ChannelId> {
     /**

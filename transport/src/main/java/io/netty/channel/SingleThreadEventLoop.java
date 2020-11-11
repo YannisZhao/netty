@@ -150,6 +150,8 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
      * Returns the number of {@link Channel}s registered with this {@link EventLoop} or {@code -1}
      * if operation is not supported. The returned value is not guaranteed to be exact accurate and
      * should be viewed as a best effort.
+     *
+     * 返回注册到该EventLoop中Selector上的Channel
      */
     @UnstableApi
     public int registeredChannels() {

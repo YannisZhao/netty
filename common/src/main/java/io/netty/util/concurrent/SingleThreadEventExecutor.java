@@ -825,8 +825,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void execute(Runnable task, boolean immediate) {
         boolean inEventLoop = inEventLoop();
+        // 先将任务添加至taskQueue
         addTask(task);
+        // 如果当前线程不是EventLoop运行线程
         if (!inEventLoop) {
+            // 如果当前EventLoop还没有启动线程，那么启动一个
             startThread();
             if (isShutdown()) {
                 boolean reject = false;
@@ -973,6 +976,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return false;
     }
 
+    /**
+     * 每个{@link SingleThreadEventExecutor}会启动一个线程，用来执行{@link #run()}方法
+     */
     private void doStartThread() {
         assert thread == null;
         executor.execute(new Runnable() {
@@ -986,6 +992,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    // run方法无限循环，执行channel IO事件的监听和读写任务
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {

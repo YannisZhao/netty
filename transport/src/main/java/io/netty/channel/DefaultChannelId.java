@@ -33,6 +33,8 @@ import static io.netty.util.internal.MacAddressUtil.parseMAC;
 
 /**
  * The default {@link ChannelId} implementation.
+ *
+ * 由机器id+进程号+序列号+timestamp+随机数组成
  */
 public final class DefaultChannelId implements ChannelId {
 

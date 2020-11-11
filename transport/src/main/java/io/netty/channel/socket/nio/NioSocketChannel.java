@@ -343,6 +343,9 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
         javaChannel().close();
     }
 
+    /**
+     * 从SocketChannel中读取字节数组到ByteBuf，返回读到到字节数
+     */
     @Override
     protected int doReadBytes(ByteBuf byteBuf) throws Exception {
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
