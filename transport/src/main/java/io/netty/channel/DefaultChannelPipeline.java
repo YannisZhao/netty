@@ -201,6 +201,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         synchronized (this) {
             checkMultiplicity(handler);
 
+            // 将handler包装成DefaultChannelHandlerContext
+            // ChannelHandlerContext是双链表节点
             newCtx = newContext(group, filterName(name, handler), handler);
 
             addLast0(newCtx);
