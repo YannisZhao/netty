@@ -208,6 +208,8 @@ public interface ChannelHandler {
      * <p>
      * This annotation is provided for documentation purpose, just like
      * <a href="http://www.javaconcurrencyinpractice.com/annotations/doc/">the JCIP annotations</a>.
+     *
+     * 标志被注解的Handler是线程安全的，否则一个Handler实例只能被添加一次
      */
     @Inherited
     @Documented

@@ -32,9 +32,9 @@ public class NettyServer {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline p = ch.pipeline();
+                            p.addLast(new LoggingHandler("logger", LogLevel.DEBUG));
                             p.addLast(new StringDecoder());
                             p.addLast(new StringEncoder());
-                            p.addLast(new LoggingHandler("logger", LogLevel.DEBUG));
                             p.addLast(serverHandler);
                         }
                     });

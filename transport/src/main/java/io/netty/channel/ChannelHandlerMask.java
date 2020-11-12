@@ -32,10 +32,17 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+/**
+ * ChannelHandler跳过方法标记工具类
+ *
+ * 标记一个ChannelHandler中有哪些方法被{@link Skip}修饰，被修饰的方法会跳过执行，mask会被缓存
+ */
 final class ChannelHandlerMask {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ChannelHandlerMask.class);
 
     // Using to mask which methods must be called for a ChannelHandler.
+
+    // InboundMethod
     static final int MASK_EXCEPTION_CAUGHT = 1;
     static final int MASK_CHANNEL_REGISTERED = 1 << 1;
     static final int MASK_CHANNEL_UNREGISTERED = 1 << 2;
@@ -45,6 +52,8 @@ final class ChannelHandlerMask {
     static final int MASK_CHANNEL_READ_COMPLETE = 1 << 6;
     static final int MASK_USER_EVENT_TRIGGERED = 1 << 7;
     static final int MASK_CHANNEL_WRITABILITY_CHANGED = 1 << 8;
+
+    // OutboundMethod
     static final int MASK_BIND = 1 << 9;
     static final int MASK_CONNECT = 1 << 10;
     static final int MASK_DISCONNECT = 1 << 11;

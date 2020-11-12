@@ -58,9 +58,17 @@ import static io.netty.channel.ChannelHandlerMask.MASK_USER_EVENT_TRIGGERED;
 import static io.netty.channel.ChannelHandlerMask.MASK_WRITE;
 import static io.netty.channel.ChannelHandlerMask.mask;
 
+/**
+ * 将ChannelHandler包装了一下，并且提供了name，mask, 以及将事件传播到
+ * 下一个ChannelHandler(ChannelHandlerContext)的方法fireXXX
+ */
 abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, ResourceLeakHint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractChannelHandlerContext.class);
+
+    /**
+     * ChannelHandlerContext是双链表结构
+     */
     volatile AbstractChannelHandlerContext next;
     volatile AbstractChannelHandlerContext prev;
 
@@ -88,11 +96,14 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private final DefaultChannelPipeline pipeline;
     private final String name;
     private final boolean ordered;
+    /**
+     * 执行标记，标记handler中哪些方法会被执行，哪些会跳过执行(@Skip)
+     */
     private final int executionMask;
 
     // Will be set to null if no child executor should be used, otherwise it will be set to the
     // child executor.
-    final EventExecutor executor;
+    final EventExecutor executor; // 不传直接用channel所属的EventLoop
     private ChannelFuture succeededFuture;
 
     // Lazily instantiated tasks used to trigger events to a handler with different executor.
@@ -873,6 +884,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return false;
     }
 
+    /**
+     * 找出下一个要执行的ChannelHandlerContext
+     *
+     * @param mask 执行方法的位置1
+     */
     private AbstractChannelHandlerContext findContextInbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
@@ -882,6 +898,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
+    /**
+     * 找出前一个要执行的ChannelHandlerContext
+     *
+     * @param mask 执行方法的位置1
+     */
     private AbstractChannelHandlerContext findContextOutbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
@@ -891,6 +912,14 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
+    /**
+     * 是否跳过该ChannelHandlerContext(ChannelHandler)的执行
+     *
+     * @param ctx 当前ChannelHandlerContext
+     * @param currentExecutor 当前EventLoop或者构造ChannelHandlerContext时传入的EventExecutor
+     * @param mask 执行方法的位标志(1)
+     * @param onlyMask 入站(入站handle方法全置1)或出站(出站handle方法全置1)
+     */
     private static boolean skipContext(
             AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
         // Ensure we correctly handle MASK_EXCEPTION_CAUGHT which is not included in the MASK_EXCEPTION_CAUGHT

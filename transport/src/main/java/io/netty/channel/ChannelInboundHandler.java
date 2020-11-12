@@ -18,6 +18,8 @@ package io.netty.channel;
 /**
  * {@link ChannelHandler} which adds callbacks for state changes. This allows the user
  * to hook in to state changes easily.
+ *
+ * 入站消息处理器顶层接口
  */
 public interface ChannelInboundHandler extends ChannelHandler {
 
@@ -57,6 +59,8 @@ public interface ChannelInboundHandler extends ChannelHandler {
 
     /**
      * Gets called if an user event was triggered.
+     *
+     * 用户事件回调，如空闲检测事件
      */
     void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception;
 

@@ -61,12 +61,25 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static final AtomicReferenceFieldUpdater<DefaultChannelPipeline, MessageSizeEstimator.Handle> ESTIMATOR =
             AtomicReferenceFieldUpdater.newUpdater(
                     DefaultChannelPipeline.class, MessageSizeEstimator.Handle.class, "estimatorHandle");
+
+    /**
+     * 指向ChannelHandlerContext双链表头节点
+     */
     final AbstractChannelHandlerContext head;
+    /**
+     * 指向ChannelHandlerContext双链表尾节点
+     */
     final AbstractChannelHandlerContext tail;
 
+    /**
+     * 在{@link AbstractChannel}构造器中会为每个Channel创建一个pipeline，Channel和Pipeline互相持有对方
+     */
     private final Channel channel;
     private final ChannelFuture succeededFuture;
     private final VoidChannelPromise voidPromise;
+    /**
+     * 开启了内存泄漏检测
+     */
     private final boolean touch = ResourceLeakDetector.isEnabled();
 
     private Map<EventExecutorGroup, EventExecutor> childExecutors;
@@ -94,6 +107,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
+        // 下面构造一个空的双链表
         tail = new TailContext(this);
         head = new HeadContext(this);
 
@@ -116,6 +130,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return touch ? ReferenceCountUtil.touch(msg, next) : msg;
     }
 
+    /**
+     * pipeline双链表节点类型为ChannelHandlerContext
+     */
     private AbstractChannelHandlerContext newContext(EventExecutorGroup group, String name, ChannelHandler handler) {
         return new DefaultChannelHandlerContext(this, childExecutor(group), name, handler);
     }

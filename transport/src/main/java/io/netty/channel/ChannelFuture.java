@@ -161,6 +161,8 @@ import java.util.concurrent.TimeUnit;
  *     // Connection established successfully
  * }
  * </pre>
+ *
+ * Channel上异步IO操作结果
  */
 public interface ChannelFuture extends Future<Void> {
 

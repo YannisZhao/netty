@@ -21,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * The result of an asynchronous operation.
+ *
+ * Netty的Future除了提供java Future的功能外，还增加了是否成功，获取异常信息，同步等待，超时等待，添加listener等功能
  */
 @SuppressWarnings("ClassNameSameAsAncestorName")
 public interface Future<V> extends java.util.concurrent.Future<V> {
