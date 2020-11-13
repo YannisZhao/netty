@@ -38,6 +38,9 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
             InternalLoggerFactory.getInstance(DefaultPromise.class.getName() + ".rejectedExecution");
     private static final int MAX_LISTENER_STACK_DEPTH = Math.min(8,
             SystemPropertyUtil.getInt("io.netty.defaultPromise.maxListenerStackDepth", 8));
+    /**
+     * 通过CAS的方式更新result，因为promise要在用户线程和executor执行线程共享
+     */
     @SuppressWarnings("rawtypes")
     private static final AtomicReferenceFieldUpdater<DefaultPromise, Object> RESULT_UPDATER =
             AtomicReferenceFieldUpdater.newUpdater(DefaultPromise.class, Object.class, "result");
@@ -47,6 +50,9 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
             new CancellationException(), DefaultPromise.class, "cancel(...)"));
     private static final StackTraceElement[] CANCELLATION_STACK = CANCELLATION_CAUSE_HOLDER.cause.getStackTrace();
 
+    /**
+     * result可能的值有：null, UNCANCELLABLE, CANCELLATION_CAUSE_HOLDER, CauseHolder, SUCCESS, result
+     */
     private volatile Object result;
     private final EventExecutor executor;
     /**

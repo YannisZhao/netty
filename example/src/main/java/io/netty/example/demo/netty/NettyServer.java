@@ -19,6 +19,8 @@ public class NettyServer {
 
     public static void main(String[] args) throws InterruptedException {
 
+        ResponseEncoder responseEncoder = new ResponseEncoder();
+
         EventLoopGroup boss = new NioEventLoopGroup(1);
         EventLoopGroup worker = new NioEventLoopGroup();
 
@@ -33,8 +35,8 @@ public class NettyServer {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline p = ch.pipeline();
                             p.addLast(new LoggingHandler("logger", LogLevel.DEBUG));
-                            p.addLast(new StringDecoder());
-                            p.addLast(new StringEncoder());
+                            p.addLast(new RequestDecoder());
+                            p.addLast(responseEncoder);
                             p.addLast(serverHandler);
                         }
                     });

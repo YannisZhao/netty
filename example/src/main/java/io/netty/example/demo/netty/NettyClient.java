@@ -13,11 +13,14 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class NettyClient {
 
     public static void main(String[] args) throws InterruptedException {
+
+        RequestEncoder requestEncoder = new RequestEncoder();
 
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -29,8 +32,8 @@ public class NettyClient {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ChannelPipeline p = ch.pipeline();
-                            p.addLast(new StringDecoder());
-                            p.addLast(new StringEncoder());
+                            p.addLast(new ResponseDecoder());
+                            p.addLast(requestEncoder);
                             p.addLast(new LoggingHandler(LogLevel.DEBUG));
                             p.addLast(new ClientHandler());
                         }
@@ -38,7 +41,10 @@ public class NettyClient {
 
             ChannelFuture f = b.connect("127.0.0.1", 8080).sync();
 
-            f.channel().writeAndFlush("haha");
+            Request request = new Request();
+            request.setId(ThreadLocalRandom.current().nextLong());
+            request.setMessage("hello");
+            f.channel().writeAndFlush(request);
 
             f.channel().closeFuture().sync();
         } finally {
