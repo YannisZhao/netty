@@ -41,14 +41,19 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
     private static final int INDEX_INCREMENT = 4;
     private static final int INDEX_DECREMENT = 1;
 
+    /**
+     * 保存各种buffer的大小
+     */
     private static final int[] SIZE_TABLE;
 
     static {
         List<Integer> sizeTable = new ArrayList<Integer>();
+        // [16, 512) 区间大小增量为16
         for (int i = 16; i < 512; i += 16) {
             sizeTable.add(i);
         }
 
+        // [512, Integer.MAX_VALUE] 之间大小为上一个的2倍
         for (int i = 512; i > 0; i <<= 1) {
             sizeTable.add(i);
         }

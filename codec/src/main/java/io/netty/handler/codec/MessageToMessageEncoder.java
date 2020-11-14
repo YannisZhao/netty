@@ -83,14 +83,14 @@ public abstract class MessageToMessageEncoder<I> extends ChannelOutboundHandlerA
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         CodecOutputList out = null;
         try {
-            if (acceptOutboundMessage(msg)) {
+            if (acceptOutboundMessage(msg)) { //与要处理的类型(泛型参数I)匹配
                 out = CodecOutputList.newInstance();
                 @SuppressWarnings("unchecked")
                 I cast = (I) msg;
                 try {
-                    encode(ctx, cast, out);
+                    encode(ctx, cast, out);//调用子类encode方法,结果放入out
                 } finally {
-                    ReferenceCountUtil.release(cast);
+                    ReferenceCountUtil.release(cast);//此时cast(原消息)已经不需要了
                 }
 
                 if (out.isEmpty()) {
@@ -98,19 +98,19 @@ public abstract class MessageToMessageEncoder<I> extends ChannelOutboundHandlerA
                             StringUtil.simpleClassName(this) + " must produce at least one message.");
                 }
             } else {
-                ctx.write(msg, promise);
+                ctx.write(msg, promise); //不匹配直接传给下一个handler
             }
         } catch (EncoderException e) {
             throw e;
         } catch (Throwable t) {
             throw new EncoderException(t);
         } finally {
-            if (out != null) {
+            if (out != null) { //表明有数据要发送
                 try {
                     final int sizeMinusOne = out.size() - 1;
                     if (sizeMinusOne == 0) {
-                        ctx.write(out.getUnsafe(0), promise);
-                    } else if (sizeMinusOne > 0) {
+                        ctx.write(out.getUnsafe(0), promise); // 将编码后的消息继续继续往下传
+                    } else if (sizeMinusOne > 0) { // 消息编码后产生了多条消息
                         // Check if we can use a voidPromise for our extra writes to reduce GC-Pressure
                         // See https://github.com/netty/netty/issues/2525
                         if (promise == ctx.voidPromise()) {
@@ -120,7 +120,7 @@ public abstract class MessageToMessageEncoder<I> extends ChannelOutboundHandlerA
                         }
                     }
                 } finally {
-                    out.recycle();
+                    out.recycle(); //回收out列表中的对象
                 }
             }
         }

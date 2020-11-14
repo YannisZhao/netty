@@ -50,6 +50,8 @@ import static java.lang.Math.min;
  * <li>{@link #getUserDefinedWritability(int)} and {@link #setUserDefinedWritability(int, boolean)}</li>
  * </ul>
  * </p>
+ *
+ * 内部维护一个基于Entry单链表的队列, {@link AbstractChannel.AbstractUnsafe}中用来保存要发送的数据
  */
 public final class ChannelOutboundBuffer {
     // Assuming a 64-bit JVM:
@@ -64,6 +66,9 @@ public final class ChannelOutboundBuffer {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ChannelOutboundBuffer.class);
 
+    /**
+     * 使用线程局部变量来保存java ByteBuffer
+     */
     private static final FastThreadLocal<ByteBuffer[]> NIO_BUFFERS = new FastThreadLocal<ByteBuffer[]>() {
         @Override
         protected ByteBuffer[] initialValue() throws Exception {
@@ -71,6 +76,9 @@ public final class ChannelOutboundBuffer {
         }
     };
 
+    /**
+     * 每个NioSocketChannel有个输出缓冲区
+     */
     private final Channel channel;
 
     // Entry(flushedEntry) --> ... Entry(unflushedEntry) --> ... Entry(tailEntry)
@@ -798,6 +806,9 @@ public final class ChannelOutboundBuffer {
     }
 
     static final class Entry {
+        /**
+         * 使用对象池缓存创建的Entry
+         */
         private static final ObjectPool<Entry> RECYCLER = ObjectPool.newPool(new ObjectCreator<Entry>() {
             @Override
             public Entry newObject(Handle<Entry> handle) {
@@ -806,7 +817,7 @@ public final class ChannelOutboundBuffer {
         });
 
         private final Handle<Entry> handle;
-        Entry next;
+        Entry next; //指向队列的下一个节点
         Object msg;
         ByteBuffer[] bufs;
         ByteBuffer buf;
@@ -849,6 +860,10 @@ public final class ChannelOutboundBuffer {
             return 0;
         }
 
+        /**
+         * 重置Entry,然后归还对象池
+         * 注意这里如果不重置,就和借出来(RECYCLER.get())的不一样,会抛IllegalArgumentException
+         */
         void recycle() {
             next = null;
             bufs = null;

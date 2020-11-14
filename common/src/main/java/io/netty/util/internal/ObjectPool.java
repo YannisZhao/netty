@@ -29,12 +29,17 @@ public abstract class ObjectPool<T> {
     /**
      * Get a {@link Object} from the {@link ObjectPool}. The returned {@link Object} may be created via
      * {@link ObjectCreator#newObject(Handle)} if no pooled {@link Object} is ready to be reused.
+     *
+     * 从对象池获取一个对象,如果没有可用对象就调用{@link ObjectCreator#newObject(Handle)}创建一个
      */
     public abstract T get();
 
     /**
      * Handle for an pooled {@link Object} that will be used to notify the {@link ObjectPool} once it can
      * reuse the pooled {@link Object} again.
+     *
+     * 对象要归还时,通过Handler来归还对象池
+     *
      * @param <T>
      */
     public interface Handle<T> {
@@ -47,6 +52,8 @@ public abstract class ObjectPool<T> {
     /**
      * Creates a new Object which references the given {@link Handle} and calls {@link Handle#recycle(Object)} once
      * it can be re-used.
+     *
+     * 命令行模式,创建一个对象,并关联一个Handle, 这样归还时就可以通过{@link Handle#recycle(Object)}来归还了
      *
      * @param <T> the type of the pooled object
      */
@@ -67,6 +74,11 @@ public abstract class ObjectPool<T> {
         return new RecyclerObjectPool<T>(ObjectUtil.checkNotNull(creator, "creator"));
     }
 
+    /**
+     * Recycler对象池
+     *
+     * @param <T> 池中对象类型
+     */
     private static final class RecyclerObjectPool<T> extends ObjectPool<T> {
         private final Recycler<T> recycler;
 

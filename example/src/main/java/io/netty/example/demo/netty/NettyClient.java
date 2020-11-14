@@ -9,6 +9,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
@@ -32,6 +33,9 @@ public class NettyClient {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ChannelPipeline p = ch.pipeline();
+                            p.addLast(new LengthFieldBasedFrameDecoder(50000, 0, 4));
+                            p.addLast(new ProtocolDecoder());
+                            p.addLast(new ProtocolEncoder());
                             p.addLast(new ResponseDecoder());
                             p.addLast(requestEncoder);
                             p.addLast(new LoggingHandler(LogLevel.DEBUG));

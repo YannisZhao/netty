@@ -24,6 +24,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+/**
+ * 基于堆内存的池化ByteBuf
+ */
 class PooledHeapByteBuf extends PooledByteBuf<byte[]> {
 
     private static final ObjectPool<PooledHeapByteBuf> RECYCLER = ObjectPool.newPool(
@@ -34,6 +37,9 @@ class PooledHeapByteBuf extends PooledByteBuf<byte[]> {
         }
     });
 
+    /**
+     * 通过工厂模式创建,对象由RECYCLER对象池管理
+     */
     static PooledHeapByteBuf newInstance(int maxCapacity) {
         PooledHeapByteBuf buf = RECYCLER.get();
         buf.reuse(maxCapacity);

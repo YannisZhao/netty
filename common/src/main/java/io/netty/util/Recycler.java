@@ -35,6 +35,8 @@ import static java.lang.Math.min;
 /**
  * Light-weight object pool based on a thread-local stack.
  *
+ * 基于FastThreadLocal线程局部栈的轻量级对象池
+ *
  * @param <T> the type of the pooled object
  */
 public abstract class Recycler<T> {
@@ -114,6 +116,9 @@ public abstract class Recycler<T> {
     private final int maxDelayedQueuesPerThread;
     private final int delayedQueueInterval;
 
+    /**
+     * 使用ThreadLocal保存对象容器stack
+     */
     private final FastThreadLocal<Stack<T>> threadLocal = new FastThreadLocal<Stack<T>>() {
         @Override
         protected Stack<T> initialValue() {
@@ -207,16 +212,25 @@ public abstract class Recycler<T> {
 
     protected abstract T newObject(Handle<T> handle);
 
+    /**
+     * 为什么要再定义一个Handle,而不是直接实现ObjectPool.Handle<T>, 为了扩展和灵活性
+     * 以后可能从ObjectPool切换到另一个pool
+     * @param <T>
+     */
     public interface Handle<T> extends ObjectPool.Handle<T>  { }
 
+    /**
+     * 默认Handle实现, 作为{@link Stack}的元素
+     * @param <T> 池对象类型
+     */
     private static final class DefaultHandle<T> implements Handle<T> {
         int lastRecycledId;
         int recycleId;
 
         boolean hasBeenRecycled;
 
-        Stack<?> stack;
-        Object value;
+        Stack<?> stack; // 保存Handle的容器stack
+        Object value;   // 池对象
 
         DefaultHandle(Stack<?> stack) {
             this.stack = stack;
@@ -224,6 +238,7 @@ public abstract class Recycler<T> {
 
         @Override
         public void recycle(Object object) {
+            // 如果对象借出去后被"损坏",那么归还时拒绝接受
             if (object != value) {
                 throw new IllegalArgumentException("object does not belong to handle");
             }
@@ -233,6 +248,7 @@ public abstract class Recycler<T> {
                 throw new IllegalStateException("recycled already");
             }
 
+            // 将对象还回去
             stack.push(this);
         }
     }

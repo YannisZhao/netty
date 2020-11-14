@@ -32,6 +32,9 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
     protected PoolChunk<T> chunk;
     protected long handle;
+    /**
+     * buffer的内存,对于堆内存buffer就是byte[],对于直接内存buffer就是引用变量ByteBuf
+     */
     protected T memory;
     protected int offset;
     protected int length;
