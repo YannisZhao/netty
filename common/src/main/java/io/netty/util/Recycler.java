@@ -229,7 +229,9 @@ public abstract class Recycler<T> {
 
         boolean hasBeenRecycled;
 
-        Stack<?> stack; // 保存Handle的容器stack
+        // 保存Handle的容器stack
+        // stack是线程局部变量,此处被DefaultHandle引用,可能会被多线程访问
+        Stack<?> stack;
         Object value;   // 池对象
 
         DefaultHandle(Stack<?> stack) {
@@ -253,6 +255,14 @@ public abstract class Recycler<T> {
         }
     }
 
+    /**
+     * 延迟回收, 用于存放延迟回收的对象
+     * 回收时如果判断为stack所属的线程,直接入栈.
+     * 如果是其他线程调的{@link Handle#recycle(Object)}, 为了避免多线程竞争, 进行延迟回收
+     *
+     * 使用线程局部变量, Stack为key, WeakOrderQueue为value, 同一个线程可能回收多个stack,
+     * 同一个stack在不同线程会有多个queue,但这些Queue之间组成一个单链表,并且stack中持有其表头
+     */
     private static final FastThreadLocal<Map<Stack<?>, WeakOrderQueue>> DELAYED_RECYCLED =
             new FastThreadLocal<Map<Stack<?>, WeakOrderQueue>>() {
         @Override
@@ -363,6 +373,9 @@ public abstract class Recycler<T> {
             handleRecycleCount = interval; // Start at interval so the first one will be recycled.
         }
 
+        /**
+         * 创建一个新的Queue,并插入stack的Queue链表的头部
+         */
         static WeakOrderQueue newQueue(Stack<?> stack, Thread thread) {
             // We allocated a Link so reserve the space
             if (!Head.reserveSpaceForLink(stack.availableSharedCapacity)) {
@@ -518,8 +531,12 @@ public abstract class Recycler<T> {
         private final int maxCapacity;
         private final int interval;
         private final int delayedQueueInterval;
+        /**
+         * 使用数组的方式实现栈
+         */
         DefaultHandle<?>[] elements;
         int size;
+
         private int handleRecycleCount;
         private WeakOrderQueue cursor, prev;
         private volatile WeakOrderQueue head;
@@ -539,6 +556,7 @@ public abstract class Recycler<T> {
 
         // Marked as synchronized to ensure this is serialized.
         synchronized void setHead(WeakOrderQueue queue) {
+            // 头插法
             queue.setNext(head);
             head = queue;
         }
@@ -561,7 +579,7 @@ public abstract class Recycler<T> {
         @SuppressWarnings({ "unchecked", "rawtypes" })
         DefaultHandle<T> pop() {
             int size = this.size;
-            if (size == 0) {
+            if (size == 0) { // 当前没有可以重用的对象
                 if (!scavenge()) {
                     return null;
                 }
@@ -655,6 +673,7 @@ public abstract class Recycler<T> {
             Thread currentThread = Thread.currentThread();
             if (threadRef.get() == currentThread) {
                 // The current Thread is the thread that belongs to the Stack, we can try to push the object now.
+                // stack所属线程访问,直接放入栈中
                 pushNow(item);
             } else {
                 // The current Thread is not the one that belongs to the Stack
@@ -683,6 +702,9 @@ public abstract class Recycler<T> {
             this.size = size + 1;
         }
 
+        /**
+         * 放入Thread对应局部变量里,该stack的Queue中
+         */
         private void pushLater(DefaultHandle<?> item, Thread thread) {
             if (maxDelayedQueues == 0) {
                 // We don't support recycling across threads and should just drop the item on the floor.
