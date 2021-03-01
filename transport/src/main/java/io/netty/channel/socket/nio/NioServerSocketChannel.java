@@ -40,6 +40,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * ServerSocketChannel的包装类，构造时默认通过{@link #DEFAULT_SELECTOR_PROVIDER} provider打开一个ServerSocketChannel
+ * 负责bind端口，accept连接请求
+ *
  * A {@link io.netty.channel.socket.ServerSocketChannel} implementation which uses
  * NIO selector based implementation to accept new connections.
  */

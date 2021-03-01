@@ -503,6 +503,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                // 完成原生java Selectable channel到selector的注册, AbstractNioChannel#doRegister()
                 doRegister();
                 neverRegistered = false;
                 registered = true;
@@ -510,7 +511,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
                 pipeline.invokeHandlerAddedIfNeeded();
-
+                // 设置结果
                 safeSetSuccess(promise);
                 // 触发channel已注册处理流程，交由ChannelPipeline中handlers处理
                 pipeline.fireChannelRegistered();

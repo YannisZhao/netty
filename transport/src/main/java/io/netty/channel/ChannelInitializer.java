@@ -26,6 +26,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 进站消息处理器，在channel注册成功后，调用{@link #initChannel(ChannelHandlerContext)}，执行初始化工作，
+ * 然后将自己从pipeline中移除，相当于一个一次性初始化器
+ * 具体初始化工作由模版方法模式交由子类去实现. {@link #initChannel(Channel)}
+ *
  * A special {@link ChannelInboundHandler} which offers an easy way to initialize a {@link Channel} once it was
  * registered to its {@link EventLoop}.
  *

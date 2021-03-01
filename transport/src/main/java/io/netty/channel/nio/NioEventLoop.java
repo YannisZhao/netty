@@ -354,6 +354,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     /**
      * Replaces the current {@link Selector} of this event loop with newly created {@link Selector}s to work
      * around the infamous epoll 100% CPU bug.
+     *
+     * 新建一个替换原来的selector，以解决臭名昭著的epoll CPU 100% bug
      */
     public void rebuildSelector() {
         if (!inEventLoop()) {
@@ -377,8 +379,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
      * 重建selector:
      *
      * 1. 打开一个新的selector
-     * 2. 将所有老的selector上绑定的channel
+     * 2. 将所有老的selector上绑定的channel注册到新的selector
      * 3. 用新的selector替换老的selector
+     * 4. 关闭老的selector
      */
     private void rebuildSelector0() {
         final Selector oldSelector = selector;
@@ -451,6 +454,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 int strategy;
                 try {
                     // SelectStrategy中各strategy < 0，即如果有事件发生会跳出switch
+                    // 默认实现DefaultSelectStrategy中，如果队列有任务就调用selectNowSupplier，
+                    // 即进行一次selectNow()调用, 返回值 >=0，就不会进入switch
+
+                    // 否则返回SelectStrategy.SELECT，命中 switch case
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
                     case SelectStrategy.CONTINUE:
@@ -493,7 +500,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 needsToSelectAgain = false;
                 final int ioRatio = this.ioRatio;
                 boolean ranTasks;
-                if (ioRatio == 100) { //如果ioRation是100，那么在处理完事件后，将所有task完成
+                // strategy > 0，说明有事件发生 //
+                if (ioRatio == 100) { //如果ioRatio是100，那么在处理完事件后，将所有task完成
                     try {
                         if (strategy > 0) {
                             processSelectedKeys();
@@ -503,16 +511,18 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         ranTasks = runAllTasks();
                     }
                 } else if (strategy > 0) {
+                    // 在ioRatio不为100当情况下，根据比例算出tasks需要执行多长时间，然后在IO时间处理完后执行
                     final long ioStartTime = System.nanoTime();
                     try {
                         processSelectedKeys();
                     } finally {
                         // Ensure we always run tasks.
                         final long ioTime = System.nanoTime() - ioStartTime;
-                        // 根据ioRation计算执行多长事件的task
+                        // 根据ioRatio计算执行多长时间的task
                         ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
                 } else {
+                    // 没有事件发生
                     ranTasks = runAllTasks(0); // This will run the minimum number of tasks
                 }
 
@@ -538,8 +548,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 handleLoopException(t);
             }
             // Always handle shutdown even if the loop processing threw an exception.
+            // 如果关闭了关闭了线程池，就退出无限循环
             try {
                 if (isShuttingDown()) {
+                    // 关闭注册的channel
                     closeAll();
                     if (confirmShutdown()) {
                         return;

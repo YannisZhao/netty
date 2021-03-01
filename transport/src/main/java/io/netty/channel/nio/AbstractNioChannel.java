@@ -39,6 +39,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ConnectionPendingException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -81,6 +82,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
+            // 设置nio channel 为非阻塞模式
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -377,6 +379,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                // 将java nio channel注册到selector上
+                // 此处ops传0，不注册感兴趣到事件, 实际注册事件在#doBeginRead()中完成
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {
@@ -399,6 +403,13 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         eventLoop().cancel(selectionKey());
     }
 
+    /**
+     * 注册channel感兴趣的事件到selector
+     * selectionKey在{@link #doRegister}时得到，真正事件注册在这里
+     * readInterestOp在创建channel时指定，
+     * 如{@link io.netty.channel.socket.nio.NioServerSocketChannel#NioServerSocketChannel(ServerSocketChannel)}
+     * 在{@link NioEventLoop#run()}中会select事件
+     */
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called

@@ -109,8 +109,10 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
+        // 创建EventExecutor选择器
         chooser = chooserFactory.newChooser(children);
 
+        // EventExecutor线程池关闭监听器，当所有children都完成关闭后，设置异步执行结果
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {

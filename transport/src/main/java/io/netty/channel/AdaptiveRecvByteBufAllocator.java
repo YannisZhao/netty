@@ -23,6 +23,8 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 /**
+ * 自适应大小接收缓冲区分配器
+ *
  * The {@link RecvByteBufAllocator} that automatically increases and
  * decreases the predicted buffer size on feed back.
  * <p>
@@ -70,6 +72,9 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
     @Deprecated
     public static final AdaptiveRecvByteBufAllocator DEFAULT = new AdaptiveRecvByteBufAllocator();
 
+    /**
+     * 二分查找SIZE_TABLE中该size对应的下标
+     */
     private static int getSizeTableIndex(final int size) {
         for (int low = 0, high = SIZE_TABLE.length - 1;;) {
             if (high < low) {

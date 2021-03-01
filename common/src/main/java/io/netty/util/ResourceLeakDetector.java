@@ -168,6 +168,7 @@ public class ResourceLeakDetector<T> {
     private final Set<DefaultResourceLeak<?>> allLeaks =
             Collections.newSetFromMap(new ConcurrentHashMap<DefaultResourceLeak<?>, Boolean>());
 
+    /** 弱引用对象回收时放入refQueue, 在对象回收后调用{@link #reportLeak}检测是否有对象内存泄漏 */
     private final ReferenceQueue<Object> refQueue = new ReferenceQueue<Object>();
     private final Set<String> reportedLeaks =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());

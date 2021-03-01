@@ -153,7 +153,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     /**
-     * 创建NioEventLoop，参数从构造器往上层传，现在有从父类{@link MultithreadEventLoopGroup#newChild}传回来了
+     * 创建NioEventLoop，参数从构造器往上层传，现在又从父类{@link MultithreadEventLoopGroup#newChild}传回来了
      * @param executor 如果创建NioEventLoopGroup时没有传入，
      */
     @Override
