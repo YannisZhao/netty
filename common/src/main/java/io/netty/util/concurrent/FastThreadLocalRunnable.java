@@ -17,6 +17,9 @@ package io.netty.util.concurrent;
 
 import io.netty.util.internal.ObjectUtil;
 
+/**
+ * 通过包装Runnable，重写run()来在任务执行后清理FastThreadLocal变量
+ */
 final class FastThreadLocalRunnable implements Runnable {
     private final Runnable runnable;
 
@@ -29,6 +32,7 @@ final class FastThreadLocalRunnable implements Runnable {
         try {
             runnable.run();
         } finally {
+            // 主动清理
             FastThreadLocal.removeAll();
         }
     }

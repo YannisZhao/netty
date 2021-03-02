@@ -122,9 +122,13 @@ public class FastThreadLocal<V> {
         variablesToRemove.remove(variable);
     }
 
+    /**
+     * 该FastThreadLocal对象在线程的InternalThreadLocalMap中的存储索引
+     */
     private final int index;
 
     public FastThreadLocal() {
+        // nextIndex由一个原子变量保存，保证唯一
         index = InternalThreadLocalMap.nextVariableIndex();
     }
 

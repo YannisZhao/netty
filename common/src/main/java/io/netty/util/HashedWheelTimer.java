@@ -82,6 +82,9 @@ public class HashedWheelTimer implements Timer {
     static final InternalLogger logger =
             InternalLoggerFactory.getInstance(HashedWheelTimer.class);
 
+    /**
+     * 创建的HashedWheelTimer实例数，最多{@link #INSTANCE_COUNT_LIMIT}个，否则告警
+     */
     private static final AtomicInteger INSTANCE_COUNTER = new AtomicInteger();
     private static final AtomicBoolean WARNED_TOO_MANY_INSTANCES = new AtomicBoolean();
     private static final int INSTANCE_COUNT_LIMIT = 64;
@@ -94,18 +97,29 @@ public class HashedWheelTimer implements Timer {
 
     private final ResourceLeakTracker<HashedWheelTimer> leak;
     private final Worker worker = new Worker();
+    /**
+     * 工作线程, {@link #worker}作为任务
+     */
     private final Thread workerThread;
 
     public static final int WORKER_STATE_INIT = 0;
     public static final int WORKER_STATE_STARTED = 1;
     public static final int WORKER_STATE_SHUTDOWN = 2;
     @SuppressWarnings({ "unused", "FieldMayBeFinal" })
-    private volatile int workerState; // 0 - init, 1 - started, 2 - shut down
+    private volatile int workerState; // worker状态：0 - init, 1 - started, 2 - shut down
 
+    /**
+     * 多久跳动一次
+     */
     private final long tickDuration;
+    /**
+     * 一圈有多少格子
+     */
     private final HashedWheelBucket[] wheel;
     private final int mask;
+    /** Worker线程初始化完成后同步等待线程 */
     private final CountDownLatch startTimeInitialized = new CountDownLatch(1);
+    /** {@link #newTimeout(TimerTask, long, TimeUnit)}添加的定时任务先放入队列，由worker来取 */
     private final Queue<HashedWheelTimeout> timeouts = PlatformDependent.newMpscQueue();
     private final Queue<HashedWheelTimeout> cancelledTimeouts = PlatformDependent.newMpscQueue();
     private final AtomicLong pendingTimeouts = new AtomicLong(0);
@@ -313,6 +327,9 @@ public class HashedWheelTimer implements Timer {
         return wheel;
     }
 
+    /**
+     * 大于指定格数的最小2的幂，方便计算任务所属格子时使用位运算替代取模
+     */
     private static int normalizeTicksPerWheel(int ticksPerWheel) {
         int normalizedTicksPerWheel = 1;
         while (normalizedTicksPerWheel < ticksPerWheel) {
@@ -346,6 +363,7 @@ public class HashedWheelTimer implements Timer {
         // Wait until the startTime is initialized by the worker.
         while (startTime == 0) {
             try {
+                // worker线程初始化完成后会设置startTime并调用countDown()
                 startTimeInitialized.await();
             } catch (InterruptedException ignore) {
                 // Ignore - it will be ready very soon.
@@ -424,6 +442,7 @@ public class HashedWheelTimer implements Timer {
             deadline = Long.MAX_VALUE;
         }
         HashedWheelTimeout timeout = new HashedWheelTimeout(this, task, deadline);
+        // 先将任务放入队列，由worker在下次tick时来取
         timeouts.add(timeout);
         return timeout;
     }
@@ -464,10 +483,11 @@ public class HashedWheelTimer implements Timer {
             do {
                 final long deadline = waitForNextTick();
                 if (deadline > 0) {
-                    int idx = (int) (tick & mask);
+                    int idx = (int) (tick & mask);// tick % (wheel.length - 1)
                     processCancelledTasks();
                     HashedWheelBucket bucket =
                             wheel[idx];
+                    // 放入定时任务
                     transferTimeoutsToBuckets();
                     bucket.expireTimeouts(deadline);
                     tick++;
@@ -490,6 +510,9 @@ public class HashedWheelTimer implements Timer {
             processCancelledTasks();
         }
 
+        /**
+         * 将定时任务从{@link #timeouts}队列取出放入定时轮槽中, 每次最多取100000
+         */
         private void transferTimeoutsToBuckets() {
             // transfer only max. 100000 timeouts per tick to prevent a thread to stale the workerThread when it just
             // adds new timeouts in a loop.
@@ -589,7 +612,9 @@ public class HashedWheelTimer implements Timer {
                 AtomicIntegerFieldUpdater.newUpdater(HashedWheelTimeout.class, "state");
 
         private final HashedWheelTimer timer;
+        /** 提交的任务 */
         private final TimerTask task;
+        /** 任务过期时间 */
         private final long deadline;
 
         @SuppressWarnings({"unused", "FieldMayBeFinal", "RedundantFieldInitialization" })
