@@ -70,8 +70,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     // writerIndex: 已用容量
     // writerIndex - readerIndex: 可读容量
-    // writerIndex - capacity(): 可写容量
-    // readerIndex < writerIndex < maxCapacity
+    // capacity() - writerIndex : 可写容量
+    // 0 <= readerIndex <= writerIndex <= maxCapacity
+    // 初始状态：readerIndex = writerIndex = 0
 
     int readerIndex;
     int writerIndex;
