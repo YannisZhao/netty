@@ -184,6 +184,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
     private final int normalCacheSize;
     private final List<PoolArenaMetric> heapArenaMetrics;
     private final List<PoolArenaMetric> directArenaMetrics;
+    /** 线程局部变量缓存该线程使用的PoolArena */
     private final PoolThreadLocalCache threadCache;
     private final int chunkSize;
     private final PooledByteBufAllocatorMetric metric;
@@ -480,6 +481,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
         threadCache.remove();
     }
 
+    /** 线程局部缓存，用于线程绑定一个PoolArena并缓存 */
     final class PoolThreadLocalCache extends FastThreadLocal<PoolThreadCache> {
         private final boolean useCacheForAllThreads;
 
@@ -516,6 +518,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
             threadCache.free(false);
         }
 
+        /** 找出使用线程最少的PoolArena */
         private <T> PoolArena<T> leastUsedArena(PoolArena<T>[] arenas) {
             if (arenas == null || arenas.length == 0) {
                 return null;

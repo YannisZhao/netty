@@ -117,6 +117,7 @@ abstract class SizeClasses implements SizeClassesMetric {
         size2idxTab(size2idxTab);
     }
 
+    /** page 大小，默认8k */
     protected final int pageSize;
     protected final int pageShifts;
     protected final int chunkSize;
